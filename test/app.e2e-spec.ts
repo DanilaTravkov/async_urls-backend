@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
-import { OpenAPIObject } from '@nestjs/swagger';
 import request from 'supertest';
 import { App } from 'supertest/types';
 import { configureApp } from './../src/app.config';
@@ -19,26 +18,17 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/api/health (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/api/health')
-      .expect(200)
-      .expect({ status: 'ok' });
+  it('/docs (GET)', async () => {
+    const response = await request(app.getHttpServer())
+      .get('/docs')
+      .expect(200);
+
+    expect(response.text).toContain('Async URL Checker API');
   });
 
-  it('/docs-json (GET)', async () => {
-    const response = await request(app.getHttpServer())
-      .get('/docs-json')
-      .expect(200);
-    const document = response.body as OpenAPIObject;
-
-    expect(document).toMatchObject({
-      info: {
-        title: 'Async URL Checker API',
-        version: '1.0',
-      },
-    });
-    expect(document.paths).toHaveProperty('/api/health');
+  it('does not expose endpoints outside the specification', async () => {
+    await request(app.getHttpServer()).get('/docs-json').expect(404);
+    await request(app.getHttpServer()).get('/api/health').expect(404);
   });
 
   afterEach(async () => {

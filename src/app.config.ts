@@ -15,12 +15,12 @@ export function configureApp(app: INestApplication): void {
     .setTitle('Async URL Checker API')
     .setDescription('REST API for asynchronous URL availability checks')
     .setVersion('1.0')
-    .addTag('health')
     .build();
   const documentFactory = () =>
     SwaggerModule.createDocument(app, swaggerConfig);
 
   SwaggerModule.setup('docs', app, documentFactory, {
-    jsonDocumentUrl: 'docs-json',
+    customSiteTitle: 'Async URL Checker API',
+    raw: false,
   });
 }
