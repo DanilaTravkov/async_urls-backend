@@ -18,13 +18,6 @@ describe('JobsService', () => {
     expect(details).toMatchObject({
       id: created.jobId,
       status: 'pending',
-      stats: {
-        pending: 1,
-        inProgress: 0,
-        success: 0,
-        error: 0,
-        cancelled: 0,
-      },
       items: [
         {
           url: 'https://example.com',
@@ -37,6 +30,7 @@ describe('JobsService', () => {
         },
       ],
     });
+    expect(Object.keys(details).sort()).toEqual(['id', 'items', 'status']);
   });
 
   it('lists jobs using cursor pagination', async () => {
@@ -52,6 +46,7 @@ describe('JobsService', () => {
     const secondPage = await service.findPage(secondPageQuery);
 
     expect(firstPage.items).toHaveLength(1);
+    expect(firstPage.items[0].stats).toEqual({ success: 0, error: 0 });
     expect(firstPage.nextCursor).not.toBeNull();
     expect(secondPage.items).toHaveLength(1);
     expect(secondPage.items[0].id).not.toBe(firstPage.items[0].id);

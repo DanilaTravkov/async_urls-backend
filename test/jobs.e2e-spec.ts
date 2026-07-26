@@ -36,6 +36,7 @@ describe('Jobs API (e2e)', () => {
 
     const created = createResponse.body as JobIdResponseDto;
     const jobId = created.jobId;
+    expect(Object.keys(created)).toEqual(['jobId']);
     const detailsResponse = await request(app.getHttpServer())
       .get(`/api/jobs/${jobId}`)
       .expect(200);
@@ -43,18 +44,16 @@ describe('Jobs API (e2e)', () => {
     expect(detailsResponse.body).toMatchObject({
       id: jobId,
       status: 'pending',
-      stats: {
-        pending: 2,
-        inProgress: 0,
-        success: 0,
-        error: 0,
-        cancelled: 0,
-      },
       items: [
         { url: 'https://example.com', status: 'pending' },
         { url: 'https://example.com', status: 'pending' },
       ],
     });
+    expect(Object.keys(detailsResponse.body as object).sort()).toEqual([
+      'id',
+      'items',
+      'status',
+    ]);
   });
 
   it('lists jobs using cursor pagination', async () => {
@@ -76,6 +75,14 @@ describe('Jobs API (e2e)', () => {
 
     expect(firstPageBody.items).toHaveLength(2);
     expect(firstPageBody.nextCursor).toEqual(expect.any(String));
+    expect(firstPageBody.items[0].stats).toEqual({ success: 0, error: 0 });
+    expect(Object.keys(firstPageBody.items[0]).sort()).toEqual([
+      'createdAt',
+      'id',
+      'stats',
+      'status',
+      'urlCount',
+    ]);
 
     const secondPage = await request(app.getHttpServer())
       .get('/api/jobs')
