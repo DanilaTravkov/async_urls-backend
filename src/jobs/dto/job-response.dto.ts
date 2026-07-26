@@ -12,28 +12,16 @@ export class JobIdResponseDto {
   }
 }
 
-export class JobStatisticsDto {
-  @ApiProperty()
-  pending!: number;
-
-  @ApiProperty()
-  inProgress!: number;
-
+export class JobResultStatisticsDto {
   @ApiProperty()
   success!: number;
 
   @ApiProperty()
   error!: number;
 
-  @ApiProperty()
-  cancelled!: number;
-
   constructor(statistics: JobStatistics) {
-    this.pending = statistics.pending;
-    this.inProgress = statistics.inProgress;
     this.success = statistics.success;
     this.error = statistics.error;
-    this.cancelled = statistics.cancelled;
   }
 }
 
@@ -50,15 +38,15 @@ export class JobSummaryDto {
   @ApiProperty()
   urlCount!: number;
 
-  @ApiProperty({ type: JobStatisticsDto })
-  stats!: JobStatisticsDto;
+  @ApiProperty({ type: JobResultStatisticsDto })
+  stats!: JobResultStatisticsDto;
 
   constructor(job: Job, statistics: JobStatistics) {
     this.id = job.id;
     this.createdAt = job.createdAt.toISOString();
     this.status = job.status;
     this.urlCount = job.items.length;
-    this.stats = new JobStatisticsDto(statistics);
+    this.stats = new JobResultStatisticsDto(statistics);
   }
 }
 
@@ -112,23 +100,15 @@ export class JobDetailsResponseDto {
   @ApiProperty({ format: 'uuid' })
   id!: string;
 
-  @ApiProperty({ format: 'date-time' })
-  createdAt!: string;
-
   @ApiProperty({ enum: JobStatus, enumName: 'JobStatus' })
   status!: JobStatus;
-
-  @ApiProperty({ type: JobStatisticsDto })
-  stats!: JobStatisticsDto;
 
   @ApiProperty({ type: [UrlCheckResponseDto] })
   items!: UrlCheckResponseDto[];
 
-  constructor(job: Job, statistics: JobStatistics) {
+  constructor(job: Job) {
     this.id = job.id;
-    this.createdAt = job.createdAt.toISOString();
     this.status = job.status;
-    this.stats = new JobStatisticsDto(statistics);
     this.items = job.items.map((item) => new UrlCheckResponseDto(item));
   }
 }

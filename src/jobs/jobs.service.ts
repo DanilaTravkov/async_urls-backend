@@ -51,6 +51,6 @@ export class JobsService {
       throw new NotFoundException(`Job ${id} was not found`);
     }
 
-    return new JobDetailsResponseDto(job, calculateJobStatistics(job.items));
+    return new JobDetailsResponseDto(job);
   }
 }
