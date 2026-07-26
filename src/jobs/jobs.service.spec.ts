@@ -1,13 +1,31 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ListJobsQueryDto } from './dto/list-jobs-query.dto';
+import { InMemoryJobsQueue } from './queue/in-memory-jobs.queue';
+import { JobsQueue } from './queue/jobs.queue';
 import { JobsService } from './jobs.service';
 import { InMemoryJobsRepository } from './storage/in-memory-jobs.repository';
+import { FindJobsPageOptions } from './storage/jobs.repository';
 
 describe('JobsService', () => {
   let service: JobsService;
 
   beforeEach(() => {
-    service = new JobsService(new InMemoryJobsRepository());
+    service = new JobsService(
+      new InMemoryJobsRepository(),
+      new InMemoryJobsQueue(),
+    );
+  });
+
+  it('returns an error and marks the job failed when enqueueing fails', async () => {
+    const repository = new InMemoryJobsRepository();
+    const failingService = new JobsService(repository, new FailingJobsQueue());
+
+    await expect(
+      failingService.create(['https://example.com']),
+    ).rejects.toThrow('The job could not be queued for processing');
+
+    const page = await repository.findPage(new FindJobsPageOptions(10));
+    expect(page.items[0].status).toBe('failed');
   });
 
   it('creates and retrieves a pending job', async () => {
@@ -65,3 +83,9 @@ describe('JobsService', () => {
     );
   });
 });
+
+class FailingJobsQueue extends JobsQueue {
+  enqueue(): Promise<void> {
+    return Promise.reject(new Error('Redis is unavailable'));
+  }
+}

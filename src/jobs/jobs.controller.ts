@@ -15,6 +15,7 @@ import {
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { CreateJobDto } from './dto/create-job.dto';
@@ -36,6 +37,7 @@ export class JobsController {
   @ApiOperation({ summary: 'Create a URL checking job' })
   @ApiAcceptedResponse({ type: JobIdResponseDto })
   @ApiBadRequestResponse({ description: 'Request body validation failed' })
+  @ApiServiceUnavailableResponse({ description: 'Redis queue is unavailable' })
   create(@Body() body: CreateJobDto): Promise<JobIdResponseDto> {
     return this.jobsService.create(body.urls);
   }

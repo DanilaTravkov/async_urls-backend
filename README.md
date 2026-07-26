@@ -31,6 +31,19 @@
 $ pnpm install
 ```
 
+## Redis and BullMQ
+
+Start Redis before starting the API:
+
+```bash
+docker compose up -d redis
+```
+
+The default connection is `localhost:6379`. It can be changed with
+`REDIS_HOST` and `REDIS_PORT`. `JOBS_WORKER_CONCURRENCY` controls how many
+different jobs BullMQ processes simultaneously and defaults to `4`. Each job
+always performs at most five concurrent HEAD requests.
+
 ## Compile and run the project
 
 ```bash

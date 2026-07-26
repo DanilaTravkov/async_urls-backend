@@ -2,9 +2,11 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { createJob } from './domain/job.factory';
 import { calculateJobStatistics } from './domain/job-statistics';
+import { JobStatus } from './domain/job-status.enum';
 import {
   JobDetailsResponseDto,
   JobIdResponseDto,
@@ -12,16 +14,31 @@ import {
   JobSummaryDto,
 } from './dto/job-response.dto';
 import { ListJobsQueryDto } from './dto/list-jobs-query.dto';
+import { JobsQueue } from './queue/jobs.queue';
 import { InvalidJobsCursorError } from './storage/invalid-jobs-cursor.error';
 import { FindJobsPageOptions, JobsRepository } from './storage/jobs.repository';
 
 @Injectable()
 export class JobsService {
-  constructor(private readonly jobsRepository: JobsRepository) {}
+  constructor(
+    private readonly jobsRepository: JobsRepository,
+    private readonly jobsQueue: JobsQueue,
+  ) {}
 
   async create(urls: readonly string[]): Promise<JobIdResponseDto> {
     const job = createJob(urls);
     await this.jobsRepository.save(job);
+
+    try {
+      await this.jobsQueue.enqueue(job.id);
+    } catch {
+      job.status = JobStatus.Failed;
+      await this.jobsRepository.save(job);
+      throw new ServiceUnavailableException(
+        'The job could not be queued for processing',
+      );
+    }
+
     return new JobIdResponseDto(job.id);
   }
 
