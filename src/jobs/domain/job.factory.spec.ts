@@ -1,5 +1,6 @@
-import { createJob } from './job.factory';
+import { createJob, JobFactoryOptions } from './job.factory';
 import { JobStatus } from './job-status.enum';
+import { Job, UrlCheck } from './job.types';
 import { UrlCheckStatus } from './url-check-status.enum';
 
 describe('createJob', () => {
@@ -7,11 +8,16 @@ describe('createJob', () => {
     const ids = ['job-id', 'item-1', 'item-2'];
     const createdAt = new Date('2026-07-26T12:00:00.000Z');
 
-    const job = createJob(['https://example.com', 'https://example.com'], {
-      createId: () => ids.shift() as string,
-      now: () => createdAt,
-    });
+    const job = createJob(
+      ['https://example.com', 'https://example.com'],
+      new JobFactoryOptions(
+        () => ids.shift() as string,
+        () => createdAt,
+      ),
+    );
 
+    expect(job).toBeInstanceOf(Job);
+    expect(job.items[0]).toBeInstanceOf(UrlCheck);
     expect(job).toEqual({
       id: 'job-id',
       createdAt,

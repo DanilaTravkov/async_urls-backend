@@ -1,28 +1,32 @@
 import { JobStatus } from './job-status.enum';
 import { UrlCheckStatus } from './url-check-status.enum';
 
-export interface UrlCheck {
-  id: string;
-  url: string;
-  status: UrlCheckStatus;
-  httpStatus: number | null;
-  error: string | null;
-  startedAt: Date | null;
-  finishedAt: Date | null;
-  durationMs: number | null;
+export class UrlCheck {
+  constructor(
+    public id: string,
+    public url: string,
+    public status: UrlCheckStatus,
+    public httpStatus: number | null,
+    public error: string | null,
+    public startedAt: Date | null,
+    public finishedAt: Date | null,
+    public durationMs: number | null,
+  ) {}
 }
 
-export interface Job {
-  id: string;
-  createdAt: Date;
-  status: JobStatus;
-  items: UrlCheck[];
+export class Job {
+  constructor(
+    public id: string,
+    public createdAt: Date,
+    public status: JobStatus,
+    public items: UrlCheck[],
+  ) {}
 }
 
-export interface JobStatistics {
-  pending: number;
-  inProgress: number;
-  success: number;
-  error: number;
-  cancelled: number;
+export class JobStatistics {
+  pending = 0;
+  inProgress = 0;
+  success = 0;
+  error = 0;
+  cancelled = 0;
 }

@@ -4,13 +4,7 @@ import { UrlCheckStatus } from './url-check-status.enum';
 export function calculateJobStatistics(
   items: readonly UrlCheck[],
 ): JobStatistics {
-  const statistics: JobStatistics = {
-    pending: 0,
-    inProgress: 0,
-    success: 0,
-    error: 0,
-    cancelled: 0,
-  };
+  const statistics = new JobStatistics();
 
   for (const item of items) {
     switch (item.status) {
