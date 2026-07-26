@@ -18,6 +18,19 @@ export class InMemoryJobsRepository extends JobsRepository {
     return Promise.resolve();
   }
 
+  update(id: string, updateJob: (job: Job) => void): Promise<Job | null> {
+    const storedJob = this.jobs.get(id);
+
+    if (!storedJob) {
+      return Promise.resolve(null);
+    }
+
+    const updatedJob = cloneJob(storedJob);
+    updateJob(updatedJob);
+    this.jobs.set(id, cloneJob(updatedJob));
+    return Promise.resolve(updatedJob);
+  }
+
   findById(id: string): Promise<Job | null> {
     const job = this.jobs.get(id);
     return Promise.resolve(job ? cloneJob(job) : null);

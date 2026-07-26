@@ -1,12 +1,14 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { createJob } from './domain/job.factory';
 import { calculateJobStatistics } from './domain/job-statistics';
 import { JobStatus } from './domain/job-status.enum';
+import { UrlCheckStatus } from './domain/url-check-status.enum';
 import {
   JobDetailsResponseDto,
   JobIdResponseDto,
@@ -20,6 +22,8 @@ import { FindJobsPageOptions, JobsRepository } from './storage/jobs.repository';
 
 @Injectable()
 export class JobsService {
+  private readonly logger = new Logger(JobsService.name);
+
   constructor(
     private readonly jobsRepository: JobsRepository,
     private readonly jobsQueue: JobsQueue,
@@ -69,5 +73,27 @@ export class JobsService {
     }
 
     return new JobDetailsResponseDto(job);
+  }
+
+  async cancel(id: string): Promise<void> {
+    const job = await this.jobsRepository.update(id, (storedJob) => {
+      storedJob.status = JobStatus.Cancelled;
+      for (const item of storedJob.items) {
+        if (item.status === UrlCheckStatus.Pending) {
+          item.status = UrlCheckStatus.Cancelled;
+        }
+      }
+    });
+
+    if (!job) {
+      throw new NotFoundException(`Job ${id} was not found`);
+    }
+
+    try {
+      await this.jobsQueue.cancel(id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`Could not remove cancelled job ${id}: ${message}`);
+    }
   }
 }

@@ -1,6 +1,8 @@
 import { createJob } from '../domain/job.factory';
 import { JobStatus } from '../domain/job-status.enum';
 import { UrlCheckStatus } from '../domain/url-check-status.enum';
+import { InMemoryJobsQueue } from '../queue/in-memory-jobs.queue';
+import { JobsService } from '../jobs.service';
 import { InMemoryJobsRepository } from '../storage/in-memory-jobs.repository';
 import { HttpHeadClient } from './http-head-client';
 import { JobsProcessingService } from './jobs-processing.service';
@@ -79,6 +81,39 @@ describe('JobsProcessingService', () => {
 
     expect((await repository.findById(job.id))?.status).toBe(JobStatus.Failed);
   });
+
+  it('finishes active checks and cancels checks that have not started', async () => {
+    const repository = new InMemoryJobsRepository();
+    const httpClient = new BlockingHttpHeadClient();
+    const job = createJob(
+      Array.from({ length: 6 }, (_, index) => `https://url-${index}.test`),
+    );
+    await repository.save(job);
+    const processingService = new JobsProcessingService(
+      repository,
+      httpClient,
+      new ImmediateDelay(),
+    );
+    const jobsService = new JobsService(repository, new InMemoryJobsQueue());
+
+    const processing = processingService.process(job.id);
+    await httpClient.waitUntilStarted(5);
+    await jobsService.cancel(job.id);
+    httpClient.releaseAll();
+    await processing;
+
+    const storedJob = await repository.findById(job.id);
+    expect(httpClient.calls).toBe(5);
+    expect(storedJob?.status).toBe(JobStatus.Cancelled);
+    expect(
+      storedJob?.items.filter((item) => item.status === UrlCheckStatus.Success),
+    ).toHaveLength(5);
+    expect(
+      storedJob?.items.filter(
+        (item) => item.status === UrlCheckStatus.Cancelled,
+      ),
+    ).toHaveLength(1);
+  });
 });
 
 class TrackingHttpHeadClient extends HttpHeadClient {
@@ -119,5 +154,29 @@ class ImmediateDelay extends ProcessingDelay {
 class FailingDelay extends ProcessingDelay {
   wait(): Promise<void> {
     return Promise.reject(new Error('Delay failed'));
+  }
+}
+
+class BlockingHttpHeadClient extends HttpHeadClient {
+  calls = 0;
+  private readonly releases: Array<() => void> = [];
+
+  check(): Promise<number> {
+    this.calls += 1;
+    return new Promise((resolve) => {
+      this.releases.push(() => resolve(200));
+    });
+  }
+
+  async waitUntilStarted(expectedCalls: number): Promise<void> {
+    while (this.calls < expectedCalls) {
+      await new Promise((resolve) => setImmediate(resolve));
+    }
+  }
+
+  releaseAll(): void {
+    for (const release of this.releases) {
+      release();
+    }
   }
 }

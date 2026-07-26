@@ -22,4 +22,28 @@ describe('BullJobsQueue', () => {
       },
     );
   });
+
+  it('removes a waiting job from BullMQ', async () => {
+    const remove = jest.fn().mockResolvedValue(undefined);
+    const getState = jest.fn().mockResolvedValue('waiting');
+    const getJob = jest.fn().mockResolvedValue({ getState, remove });
+    const queue = { getJob } as unknown as Queue<JobQueuePayload>;
+    const jobsQueue = new BullJobsQueue(queue);
+
+    await jobsQueue.cancel('job-id');
+
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves an active job for cooperative cancellation', async () => {
+    const remove = jest.fn().mockResolvedValue(undefined);
+    const getState = jest.fn().mockResolvedValue('active');
+    const getJob = jest.fn().mockResolvedValue({ getState, remove });
+    const queue = { getJob } as unknown as Queue<JobQueuePayload>;
+    const jobsQueue = new BullJobsQueue(queue);
+
+    await jobsQueue.cancel('job-id');
+
+    expect(remove).not.toHaveBeenCalled();
+  });
 });

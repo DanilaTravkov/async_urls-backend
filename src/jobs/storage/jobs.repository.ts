@@ -16,6 +16,10 @@ export class JobsPage {
 
 export abstract class JobsRepository {
   abstract save(job: Job): Promise<void>;
+  abstract update(
+    id: string,
+    updateJob: (job: Job) => void,
+  ): Promise<Job | null>;
   abstract findById(id: string): Promise<Job | null>;
   abstract findPage(options: FindJobsPageOptions): Promise<JobsPage>;
 }

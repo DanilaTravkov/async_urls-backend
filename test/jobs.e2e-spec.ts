@@ -116,4 +116,31 @@ describe('Jobs API (e2e)', () => {
       .get('/api/jobs/00000000-0000-4000-8000-000000000000')
       .expect(404);
   });
+
+  it('cancels a job and its pending URL checks', async () => {
+    const createResponse = await request(app.getHttpServer())
+      .post('/api/jobs')
+      .send({ urls: ['https://first.test', 'https://second.test'] })
+      .expect(202);
+    const created = createResponse.body as JobIdResponseDto;
+
+    await request(app.getHttpServer())
+      .delete(`/api/jobs/${created.jobId}`)
+      .expect(204);
+    await request(app.getHttpServer())
+      .delete(`/api/jobs/${created.jobId}`)
+      .expect(204);
+
+    const detailsResponse = await request(app.getHttpServer())
+      .get(`/api/jobs/${created.jobId}`)
+      .expect(200);
+
+    expect(detailsResponse.body).toMatchObject({
+      status: 'cancelled',
+      items: [{ status: 'cancelled' }, { status: 'cancelled' }],
+    });
+    await request(app.getHttpServer())
+      .delete('/api/jobs/00000000-0000-4000-8000-000000000000')
+      .expect(404);
+  });
 });

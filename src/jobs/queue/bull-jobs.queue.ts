@@ -21,4 +21,17 @@ export class BullJobsQueue extends JobsQueue {
       removeOnFail: { count: 1000 },
     });
   }
+
+  async cancel(jobId: string): Promise<void> {
+    const queuedJob = await this.queue.getJob(jobId);
+
+    if (!queuedJob) {
+      return;
+    }
+
+    const state = await queuedJob.getState();
+    if (state !== 'active' && state !== 'completed' && state !== 'failed') {
+      await queuedJob.remove();
+    }
+  }
 }
