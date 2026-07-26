@@ -41,6 +41,23 @@ describe('InMemoryJobsRepository', () => {
     expect(secondPage.nextCursor).toBeNull();
   });
 
+  it('updates a job atomically without exposing the stored instance', async () => {
+    const job = buildJob('job-1', '2026-07-26T12:00:00.000Z');
+    await repository.save(job);
+
+    const updatedJob = await repository.update(job.id, (storedJob) => {
+      storedJob.items[0].url = 'https://updated.test';
+    });
+    if (updatedJob) {
+      updatedJob.items[0].url = 'https://mutated-after-update.test';
+    }
+
+    expect((await repository.findById(job.id))?.items[0].url).toBe(
+      'https://updated.test',
+    );
+    expect(await repository.update('missing', () => undefined)).toBeNull();
+  });
+
   it('rejects invalid pagination input', () => {
     expect(() => repository.findPage(new FindJobsPageOptions(0))).toThrow(
       RangeError,

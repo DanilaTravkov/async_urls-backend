@@ -82,10 +82,35 @@ describe('JobsService', () => {
       BadRequestException,
     );
   });
+
+  it('cancels a job and all URL checks that have not started', async () => {
+    const created = await service.create([
+      'https://first.test',
+      'https://second.test',
+    ]);
+
+    await service.cancel(created.jobId);
+    await service.cancel(created.jobId);
+
+    expect(await service.findById(created.jobId)).toMatchObject({
+      status: 'cancelled',
+      items: [{ status: 'cancelled' }, { status: 'cancelled' }],
+    });
+  });
+
+  it('returns not found when cancelling a missing job', async () => {
+    await expect(
+      service.cancel('00000000-0000-4000-8000-000000000000'),
+    ).rejects.toBeInstanceOf(NotFoundException);
+  });
 });
 
 class FailingJobsQueue extends JobsQueue {
   enqueue(): Promise<void> {
     return Promise.reject(new Error('Redis is unavailable'));
+  }
+
+  cancel(): Promise<void> {
+    return Promise.resolve();
   }
 }

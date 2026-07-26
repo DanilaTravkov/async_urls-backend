@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   HttpStatus,
@@ -13,6 +14,7 @@ import {
   ApiAcceptedResponse,
   ApiBadRequestResponse,
   ApiNotFoundResponse,
+  ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiServiceUnavailableResponse,
@@ -59,5 +61,15 @@ export class JobsController {
     @Param('id', new ParseUUIDPipe()) id: string,
   ): Promise<JobDetailsResponseDto> {
     return this.jobsService.findById(id);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Cancel a job' })
+  @ApiNoContentResponse({ description: 'Job cancelled' })
+  @ApiBadRequestResponse({ description: 'Job ID is not a UUID' })
+  @ApiNotFoundResponse({ description: 'Job does not exist' })
+  cancel(@Param('id', new ParseUUIDPipe()) id: string): Promise<void> {
+    return this.jobsService.cancel(id);
   }
 }

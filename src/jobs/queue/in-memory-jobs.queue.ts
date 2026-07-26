@@ -6,4 +6,8 @@ export class InMemoryJobsQueue extends JobsQueue {
   enqueue(): Promise<void> {
     return Promise.resolve();
   }
+
+  cancel(): Promise<void> {
+    return Promise.resolve();
+  }
 }
