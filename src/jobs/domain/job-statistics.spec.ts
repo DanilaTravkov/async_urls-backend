@@ -1,5 +1,6 @@
 import { createJob } from './job.factory';
 import { calculateJobStatistics } from './job-statistics';
+import { JobStatistics } from './job.types';
 import { UrlCheckStatus } from './url-check-status.enum';
 
 describe('calculateJobStatistics', () => {
@@ -17,7 +18,10 @@ describe('calculateJobStatistics', () => {
       item.status = statuses[index];
     });
 
-    expect(calculateJobStatistics(job.items)).toEqual({
+    const statistics = calculateJobStatistics(job.items);
+
+    expect(statistics).toBeInstanceOf(JobStatistics);
+    expect(statistics).toEqual({
       pending: 1,
       inProgress: 1,
       success: 1,

@@ -1,18 +1,17 @@
 import { Job } from '../domain/job.types';
 import { InvalidJobsCursorError } from './invalid-jobs-cursor.error';
 
-interface JobsCursorPayload {
-  createdAt: string;
-  id: string;
-  version: 1;
+class JobsCursorPayload {
+  readonly version = 1;
+
+  constructor(
+    public createdAt: string,
+    public id: string,
+  ) {}
 }
 
 export function encodeJobsCursor(job: Job): string {
-  const payload: JobsCursorPayload = {
-    createdAt: job.createdAt.toISOString(),
-    id: job.id,
-    version: 1,
-  };
+  const payload = new JobsCursorPayload(job.createdAt.toISOString(), job.id);
 
   return Buffer.from(JSON.stringify(payload)).toString('base64url');
 }
@@ -27,7 +26,7 @@ export function decodeJobsCursor(cursor: string): JobsCursorPayload {
       throw new InvalidJobsCursorError();
     }
 
-    return value;
+    return new JobsCursorPayload(value.createdAt, value.id);
   } catch (error) {
     if (error instanceof InvalidJobsCursorError) {
       throw error;

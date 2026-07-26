@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { InMemoryJobsRepository } from './storage/in-memory-jobs.repository';
-import { JOBS_REPOSITORY } from './storage/jobs-repository.interface';
+import { JobsRepository } from './storage/jobs.repository';
 
 @Module({
   providers: [
     InMemoryJobsRepository,
     {
-      provide: JOBS_REPOSITORY,
+      provide: JobsRepository,
       useExisting: InMemoryJobsRepository,
     },
   ],
-  exports: [JOBS_REPOSITORY],
+  exports: [JobsRepository],
 })
 export class JobsModule {}

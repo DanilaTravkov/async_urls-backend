@@ -1,25 +1,26 @@
 import { Injectable } from '@nestjs/common';
+import { cloneJob } from '../domain/job.factory';
 import { Job } from '../domain/job.types';
 import { decodeJobsCursor, encodeJobsCursor } from './jobs-cursor';
 import {
   FindJobsPageOptions,
   JobsPage,
   JobsRepository,
-} from './jobs-repository.interface';
+} from './jobs.repository';
 import { InvalidJobsCursorError } from './invalid-jobs-cursor.error';
 
 @Injectable()
-export class InMemoryJobsRepository implements JobsRepository {
+export class InMemoryJobsRepository extends JobsRepository {
   private readonly jobs = new Map<string, Job>();
 
   save(job: Job): Promise<void> {
-    this.jobs.set(job.id, structuredClone(job));
+    this.jobs.set(job.id, cloneJob(job));
     return Promise.resolve();
   }
 
   findById(id: string): Promise<Job | null> {
     const job = this.jobs.get(id);
-    return Promise.resolve(job ? structuredClone(job) : null);
+    return Promise.resolve(job ? cloneJob(job) : null);
   }
 
   findPage(options: FindJobsPageOptions): Promise<JobsPage> {
@@ -39,10 +40,12 @@ export class InMemoryJobsRepository implements JobsRepository {
         ? encodeJobsCursor(items[items.length - 1])
         : null;
 
-    return Promise.resolve({
-      items: structuredClone(items),
-      nextCursor,
-    });
+    return Promise.resolve(
+      new JobsPage(
+        items.map((job) => cloneJob(job)),
+        nextCursor,
+      ),
+    );
   }
 
   private findStartIndex(jobs: readonly Job[], cursor: string): number {
