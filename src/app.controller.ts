@@ -1,28 +1,17 @@
-import { Body, Controller, Get, Header, HttpCode, Post, Req } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AppService } from './app.service';
-import type { Request } from 'express';
-import { CreateCatDto } from './create-cat.dto';
+import { HealthResponseDto } from './health-response.dto';
 
-@Controller()
+@ApiTags('health')
+@Controller('health')
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  @ApiOperation({ summary: 'Check API availability' })
+  @ApiOkResponse({ type: HealthResponseDto })
+  getHealth(): HealthResponseDto {
+    return this.appService.getHealth();
   }
-
-  @Get('cats')
-  // @HttpCode(202)
-  getCats(@Req() request: Request): string {
-    return 'This will return cats';
-  }
-
-  @Post('cats')
-  @Header('Cache-Control', 'no-store')
-  @HttpCode(204)
-  createCat(@Body() createCatDto: CreateCatDto): string {
-    return 'This will add a new cat';
-  }
-
 }
