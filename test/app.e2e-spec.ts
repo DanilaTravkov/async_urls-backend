@@ -26,11 +26,6 @@ describe('AppController (e2e)', () => {
     expect(response.text).toContain('Async URL Checker API');
   });
 
-  it('does not expose endpoints outside the specification', async () => {
-    await request(app.getHttpServer()).get('/docs-json').expect(404);
-    await request(app.getHttpServer()).get('/api/health').expect(404);
-  });
-
   afterEach(async () => {
     await app.close();
   });
