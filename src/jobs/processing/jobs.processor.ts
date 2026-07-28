@@ -11,7 +11,7 @@ const DEFAULT_CONCURRENT_JOBS = 4;
 
 @Processor(JOBS_QUEUE_NAME, {
   concurrency: readPositiveInteger(
-    process.env.JOBS_WORKER_CONCURRENCY,
+    "4",
     DEFAULT_CONCURRENT_JOBS,
   ),
 })
